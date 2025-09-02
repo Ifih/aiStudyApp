@@ -7,22 +7,26 @@ from mysql.connector import Error
 app = Flask(__name__)
 CORS(app)
 
-# Database configuration
+
+# Database Configuration
+
 db_config = {
     'host': 'localhost',
-    'user': 'Falaye_Ifeoluwa',
-    'password': '1234',
+    'user': 'Falaye_Ifeoluwa',   
+    'password': '1234',          
     'database': 'flashcardsDB'
 }
 
 
+# Database Setup
+
 def create_connection():
     connection = None
     try:
         connection = mysql.connector.connect(**db_config)
-        print("Connection to MySQL DB successful")
+        print("✅ Connection to MySQL DB successful")
     except Error as e:
-        print(f"The error '{e}' occurred")
+        print(f"❌ Database error: {e}")
     return connection
 
 def create_flashcards_table(connection):
@@ -37,88 +41,72 @@ def create_flashcards_table(connection):
     try:
         cursor.execute(create_table_query)
         connection.commit()
-        print("Flashcards table created successfully")
+        print("✅ Flashcards table ready")
     except Error as e:
-        print(f"The error '{e}' occurred")
-
-# Load the text generation model
-# The model will download on the first run.
-generator = None
-try:
-    generator = pipeline('text-generation', model='distilgpt2')
-    print("Hugging Face model loaded successfully.")
-except Exception as e:
-    print(f"Error loading Hugging Face model: {e}")
-
-# Database connection and table creation
-conn = create_connection()
-if conn:
-    create_flashcards_table(conn)
-
-def create_connection():
-    connection = None
-    try:
-        connection = mysql.connector.connect(**db_config)
-        print("Connection to MySQL DB successful")
-    except Error as e:
-        print(f"The error '{e}' occurred")
-    return connection
-
-def create_flashcards_table(connection):
-    cursor = connection.cursor()
-    create_table_query = """
-    CREATE TABLE IF NOT EXISTS flashcards (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      question TEXT NOT NULL,
-      answer TEXT NOT NULL
-    ) ENGINE=InnoDB;
-    """
-    try:
-        cursor.execute(create_table_query)
-        connection.commit()
-        print("Flashcards table created successfully")
-    except Error as e:
-        print(f"The error '{e}' occurred")
+        print(f"❌ Table creation error: {e}")
 
 def save_flashcard(connection, question, answer):
     cursor = connection.cursor()
     add_card_query = """
     INSERT INTO flashcards (question, answer) VALUES (%s, %s)
     """
-    card_data = (question, answer)
     try:
-        cursor.execute(add_card_query, card_data)
+        cursor.execute(add_card_query, (question, answer))
         connection.commit()
-        print(f"Flashcard '{question}' saved successfully.")
+        print(f"💾 Flashcard saved: {question}")
         return {'id': cursor.lastrowid, 'question': question, 'answer': answer}
     except Error as e:
-        print(f"The error '{e}' occurred")
+        print(f"❌ Insert error: {e}")
         return None
 
+
+# Load Hugging Face Q&A model
+
+qa_model = None
+try:
+    qa_model = pipeline("question-answering", model="deepset/roberta-base-squad2")
+    print("✅ Hugging Face Q&A model loaded successfully")
+except Exception as e:
+    print(f"❌ Error loading Hugging Face model: {e}")
+
+# Connect to DB
+conn = create_connection()
+if conn:
+    create_flashcards_table(conn)
+
+
+# AI Q&A Flashcard Generation
+
 def get_ai_generated_qa(notes):
-    if not generator:
-        print("Hugging Face model is not available")
+    if not qa_model:
+        print("❌ Model not available")
         return []
 
-    prompt = f"From the following notes, generate 5 questions and answers. \n\nNotes: {notes}\n\nQuestions & Answers:"
-    generated_text = generator(
-        prompt,
-        max_length=200,
-        num_return_sequences=1,
-        truncation=True
-    )
-    text = generated_text[0]['generated_text']
+    # Example template questions
+    question_templates = [
+        "What is the main concept discussed?",
+        "Why is this topic important?",
+        "What problem does this solve?",
+        "what are the key takeaways?",
+        "summarize the main points.",
+
+    ]
+
     qa_pairs = []
-    lines = text.split('\n')
-    for line in lines:
-        if line.strip():
-            parts = line.split('?', 1)
-            if len(parts) == 2:
-                question = parts[0].strip() + '?'
-                answer = parts[1].strip()
-                qa_pairs.append({'question': question, 'answer': answer})
+    for q in question_templates:
+        try:
+            result = qa_model(question=q, context=notes)
+            qa_pairs.append({
+                "question": q,
+                "answer": result.get("answer", "No answer found")
+            })
+        except Exception as e:
+            qa_pairs.append({"question": q, "answer": f"Error: {e}"})
+
     return qa_pairs
 
+
+# Routes
 
 @app.route('/generate', methods=['POST'])
 def generate_flashcards():
@@ -130,7 +118,6 @@ def generate_flashcards():
         return jsonify({'error': 'No notes provided'}), 400
 
     notes = data['notes']
-    
     generated_qas = get_ai_generated_qa(notes)
 
     saved_flashcards = []
@@ -141,6 +128,18 @@ def generate_flashcards():
 
     return jsonify({'flashcards': saved_flashcards})
 
+@app.route('/flashcards', methods=['GET'])
+def get_flashcards():
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM flashcards")
+    results = cursor.fetchall()
+    return jsonify(results)
+
+
+# Run App
 
 if __name__ == '__main__':
     app.run(debug=True)

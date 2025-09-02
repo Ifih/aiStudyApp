@@ -1,8 +1,8 @@
-The following are the dependencies required to run the backend application:
-- flask
-- flask-cors
-- mysql-connector-python
-- transformers
-- torch
-- huggingface-hub
+/ Dependencies required to run the backend application:
+flask
+flask-cors
+mysql-connector-python
+transformers
+torch
+huggingface-hub
 
