@@ -85,11 +85,10 @@ def get_ai_generated_qa(notes):
     # Example template questions
     question_templates = [
         "What is the main concept discussed?",
-        "Why is this topic important?",
+        "Explain the significance of this topic.",
         "What problem does this solve?",
         "what are the key takeaways?",
-        "summarize the main points.",
-
+        "What are the challenges associated with this topic?",
     ]
 
     qa_pairs = []
