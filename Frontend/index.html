@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Buddy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>AI Study Buddy</h1>
+        <p>Kindly paste your study notes below and generate flashcards instantly.</p>
+        <textarea id="notesInput" placeholder="Enter your study notes here..."></textarea>
+        <button class="action-button" id="generateButton">Generate Flashcards</button>
+
+        <div class="flashcard-container" id="flashcardContainer">
+            <!-- Flashcards will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Message Box UI -->
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button id="closeMessageBox">OK</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
