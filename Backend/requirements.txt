@@ -1,7 +1,9 @@
-/ Dependencies required to run the backend application:
-flask
-flask-cors
-mysql-connector-python
+Flask
+Flask-SQLAlchemy
+Flask-Bcrypt
+Flask-Cors
+requests
+sqlalchemy
 transformers
 torch
 huggingface-hub
