@@ -1,30 +1,425 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Study Buddy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simple flip animation for flashcards */
+        .flashcard-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+        .flashcard.is-flipped .flashcard-inner { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back { backface-visibility: hidden; }
+        .flashcard-back { transform: rotateY(180deg); }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>AI Study Buddy</h1>
-        <p>Kindly paste your study notes below and generate flashcards instantly.</p>
-        <textarea id="notesInput" placeholder="Enter your study notes here..."></textarea>
-        <button class="action-button" id="generateButton">Generate Flashcards</button>
+<body class="h-full font-sans text-gray-800">
 
-        <div class="flashcard-container" id="flashcardContainer">
-            <!-- Flashcards will be dynamically added here -->
+    <div id="app" class="flex flex-col min-h-screen">
+
+        <nav class="bg-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="#/" class="text-2xl font-bold text-indigo-600">🧠 AI Study Buddy</a>
+                    </div>
+                    <div class="hidden md:block">
+                        <div id="nav-links" class="ml-10 flex items-baseline space-x-4">
+                            </div>
+                    </div>
+                    <div class="-mr-2 flex md:hidden">
+                         <button id="mobile-menu-button" class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+             <div class="md:hidden" id="mobile-menu">
+                <div id="mobile-nav-links" class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                     </div>
+            </div>
+        </nav>
+
+        <main class="flex-grow">
+            </main>
+
+    </div>
+
+    <template id="landing-page-template">
+        <div class="py-16 text-center bg-gray-50">
+            <div class="container mx-auto px-6">
+                <h1 class="text-5xl font-extrabold text-gray-900">Supercharge Your Learning</h1>
+                <p class="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">Turn your study notes into interactive flashcards instantly with the power of AI. Sign up to get started!</p>
+                <div class="mt-8">
+                    <a href="#/signup" class="inline-block bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition duration-300">Get Started for Free</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </template>
 
-    <!-- Message Box UI -->
-    <div id="messageBox" class="message-box">
-        <p id="messageText"></p>
-        <button id="closeMessageBox">OK</button>
-    </div>
+    <template id="signup-page-template">
+        <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+                <div>
+                    <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Create a new account</h2>
+                </div>
+                <form id="signup-form" class="mt-8 space-y-6">
+                    <div id="signup-error" class="hidden text-red-500 text-sm"></div>
+                    <div class="rounded-md shadow-sm -space-y-px">
+                        <div>
+                            <input id="signup-username" name="username" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Username">
+                        </div>
+                        <div>
+                            <input id="signup-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Email address">
+                        </div>
+                        <div>
+                            <input id="signup-password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Password">
+                        </div>
+                    </div>
+                    <div>
+                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Sign up
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
 
-    <script src="script.js"></script>
+    <template id="signin-page-template">
+         <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+                <div>
+                    <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
+                </div>
+                <form id="signin-form" class="mt-8 space-y-6">
+                    <div id="signin-error" class="hidden text-red-500 text-sm"></div>
+                    <div class="rounded-md shadow-sm -space-y-px">
+                         <div>
+                            <input id="signin-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Email address">
+                        </div>
+                        <div>
+                            <input id="signin-password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Password">
+                        </div>
+                    </div>
+                    <div>
+                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Sign in
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <template id="dashboard-page-template">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-bold text-gray-900">Welcome, <span id="username-display"></span>!</h1>
+            
+            <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Generate New Flashcards</h2>
+                <form id="flashcard-form">
+                    <textarea id="notes-input" rows="8" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="Paste your study notes here..."></textarea>
+                    <button id="generate-btn" type="submit" class="mt-4 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Generate Flashcards
+                    </button>
+                    <div id="loading-spinner" class="hidden mt-4">Generating... Please wait.</div>
+                </form>
+            </div>
+
+            <div class="mt-12">
+                <h2 class="text-2xl font-bold mb-6">Your Flashcards</h2>
+                <div id="flashcards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+                 <p id="no-flashcards-msg" class="hidden text-gray-500">You haven't generated any flashcards yet. Use the form above to get started!</p>
+            </div>
+        </div>
+    </template>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- CONFIGURATION ---
+            // IMPORTANT: Replace this with your actual Render backend URL when deployed.
+            const API_BASE_URL = 'http://127.0.0.1:5001'; 
+            
+            // --- STATE MANAGEMENT ---
+            const state = {
+                isAuthenticated: false,
+                user: null,
+            };
+
+            // --- UI ELEMENTS ---
+            const mainContent = document.querySelector('main');
+            const navLinks = document.getElementById('nav-links');
+            const mobileNavLinks = document.getElementById('mobile-nav-links');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            // --- ROUTER ---
+            const routes = {
+                '/': 'landing-page-template',
+                '/signup': 'signup-page-template',
+                '/signin': 'signin-page-template',
+                '/dashboard': 'dashboard-page-template',
+            };
+
+            const navigate = (path) => {
+                window.location.hash = path;
+            };
+
+            const renderContent = () => {
+                const path = window.location.hash.slice(1) || '/';
+                const templateId = routes[path];
+                
+                if (path === '/dashboard' && !state.isAuthenticated) {
+                    navigate('/signin');
+                    return;
+                }
+
+                if (templateId) {
+                    const template = document.getElementById(templateId);
+                    mainContent.innerHTML = template.innerHTML;
+                    addEventListenersForPage(path);
+                } else {
+                    mainContent.innerHTML = '<p class="text-center py-10">404 - Page Not Found</p>';
+                }
+                updateNav();
+            };
+
+            // --- NAVIGATION ---
+            const updateNav = () => {
+                const links = state.isAuthenticated ? `
+                    <a href="#/dashboard" class="text-gray-700 hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                    <a href="#" id="signout-btn" class="text-gray-700 hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium">Sign Out</a>
+                ` : `
+                    <a href="#/" class="text-gray-700 hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                    <a href="#/signup" class="text-gray-700 hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium">Sign Up</a>
+                    <a href="#/signin" class="bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium">Sign In</a>
+                `;
+                 const mobileLinks = state.isAuthenticated ? `
+                    <a href="#/dashboard" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Dashboard</a>
+                    <a href="#" id="mobile-signout-btn" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Sign Out</a>
+                ` : `
+                    <a href="#/" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</a>
+                    <a href="#/signup" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Sign Up</a>
+                    <a href="#/signin" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Sign In</a>
+                `;
+                navLinks.innerHTML = links;
+                mobileNavLinks.innerHTML = mobileLinks;
+            };
+
+            // --- API HELPERS ---
+            const apiFetch = async (endpoint, options = {}) => {
+                const defaultOptions = {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // Important for sending cookies
+                };
+
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...defaultOptions, ...options });
+                
+                if (response.status === 401 && window.location.hash !== '#/signin') {
+                    state.isAuthenticated = false;
+                    state.user = null;
+                    navigate('/signin');
+                }
+                
+                return response;
+            };
+
+            // --- EVENT HANDLERS ---
+            const handleSignUp = async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const errorDiv = document.getElementById('signup-error');
+                const user = {
+                    username: form.username.value,
+                    email: form.email.value,
+                    password: form.password.value,
+                };
+                
+                try {
+                    const response = await apiFetch('/api/auth/signup', {
+                        method: 'POST',
+                        body: JSON.stringify(user),
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Sign up failed');
+                    }
+                    alert('Sign up successful! Please sign in.');
+                    navigate('/signin');
+                } catch (err) {
+                    errorDiv.textContent = err.message;
+                    errorDiv.classList.remove('hidden');
+                }
+            };
+            
+            const handleSignIn = async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const errorDiv = document.getElementById('signin-error');
+                const credentials = {
+                    email: form.email.value,
+                    password: form.password.value,
+                };
+
+                try {
+                    const response = await apiFetch('/api/auth/signin', {
+                        method: 'POST',
+                        body: JSON.stringify(credentials),
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Sign in failed');
+                    }
+                    state.isAuthenticated = true;
+                    state.user = data.user;
+                    navigate('/dashboard');
+                } catch (err) {
+                    errorDiv.textContent = err.message;
+                    errorDiv.classList.remove('hidden');
+                }
+            };
+
+            const handleSignOut = async () => {
+                await apiFetch('/api/auth/signout', { method: 'POST' });
+                state.isAuthenticated = false;
+                state.user = null;
+                navigate('/');
+            };
+            
+            const handleGenerateFlashcards = async (e) => {
+                e.preventDefault();
+                const notesInput = document.getElementById('notes-input');
+                const generateBtn = document.getElementById('generate-btn');
+                const loadingSpinner = document.getElementById('loading-spinner');
+
+                generateBtn.disabled = true;
+                loadingSpinner.classList.remove('hidden');
+
+                try {
+                    const response = await apiFetch('/api/generate', {
+                        method: 'POST',
+                        body: JSON.stringify({ notes: notesInput.value }),
+                    });
+                    const newFlashcard = await response.json();
+                    if (!response.ok) {
+                        throw new Error(newFlashcard.message || 'Failed to generate flashcard.');
+                    }
+                    notesInput.value = '';
+                    addFlashcardToDOM(newFlashcard, true); // Add to the top of the list
+                } catch (err) {
+                    alert(`Error: ${err.message}`);
+                } finally {
+                    generateBtn.disabled = false;
+                    loadingSpinner.classList.add('hidden');
+                }
+            };
+
+            // --- DOM MANIPULATION ---
+            const addFlashcardToDOM = (flashcard, prepend = false) => {
+                const container = document.getElementById('flashcards-container');
+                const noFlashcardsMsg = document.getElementById('no-flashcards-msg');
+                if (noFlashcardsMsg) noFlashcardsMsg.classList.add('hidden');
+
+                const cardElement = document.createElement('div');
+                cardElement.className = 'flashcard bg-white rounded-lg shadow-lg perspective-1000 cursor-pointer';
+                cardElement.innerHTML = `
+                    <div class="flashcard-inner relative w-full h-48">
+                        <div class="flashcard-front absolute w-full h-full p-6 flex items-center justify-center text-center">
+                            <p class="text-lg font-semibold">${flashcard.question}</p>
+                        </div>
+                        <div class="flashcard-back absolute w-full h-full p-6 flex items-center justify-center text-center bg-indigo-100 rounded-lg">
+                            <p class="text-md">${flashcard.answer}</p>
+                        </div>
+                    </div>
+                `;
+                cardElement.addEventListener('click', () => {
+                    cardElement.classList.toggle('is-flipped');
+                });
+                
+                if (prepend) {
+                    container.prepend(cardElement);
+                } else {
+                    container.appendChild(cardElement);
+                }
+            };
+
+            const loadDashboard = async () => {
+                if (state.user) {
+                    document.getElementById('username-display').textContent = state.user.username;
+                }
+                try {
+                    const response = await apiFetch('/api/flashcards');
+                    const flashcards = await response.json();
+                    const container = document.getElementById('flashcards-container');
+                    const noFlashcardsMsg = document.getElementById('no-flashcards-msg');
+                    container.innerHTML = ''; // Clear existing
+                    if (flashcards.length > 0) {
+                        flashcards.forEach(card => addFlashcardToDOM(card));
+                    } else {
+                        if (noFlashcardsMsg) noFlashcardsMsg.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error('Failed to load flashcards:', err);
+                }
+            };
+
+            // --- BIND EVENT LISTENERS ---
+            const addEventListenersForPage = (path) => {
+                if (path === '/signup') {
+                    document.getElementById('signup-form').addEventListener('submit', handleSignUp);
+                }
+                if (path === '/signin') {
+                    document.getElementById('signin-form').addEventListener('submit', handleSignIn);
+                }
+                if (path === '/dashboard') {
+                    document.getElementById('flashcard-form').addEventListener('submit', handleGenerateFlashcards);
+                    loadDashboard();
+                }
+            };
+
+            // Event listener for nav signout buttons
+            document.body.addEventListener('click', (e) => {
+                if (e.target.id === 'signout-btn' || e.target.id === 'mobile-signout-btn') {
+                    e.preventDefault();
+                    handleSignOut();
+                }
+            });
+            
+            // Event listener for mobile menu toggle
+             mobileMenuButton.addEventListener('click', () => {
+                const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+                mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.classList.toggle('hidden');
+                mobileMenuButton.querySelector('svg:first-child').classList.toggle('hidden');
+                mobileMenuButton.querySelector('svg:last-child').classList.toggle('block');
+             });
+
+            // --- INITIALIZATION ---
+            const initApp = async () => {
+                try {
+                    const response = await apiFetch('/api/auth/status');
+                    if (response.ok) {
+                        const data = await response.json();
+                        state.isAuthenticated = data.isAuthenticated;
+                        state.user = data.user;
+                    }
+                } catch (err) {
+                   console.log("Not authenticated or server is down.");
+                } finally {
+                   renderContent();
+                }
+            };
+
+            window.addEventListener('hashchange', renderContent);
+            initApp();
+        });
+    </script>
 </body>
 </html>
